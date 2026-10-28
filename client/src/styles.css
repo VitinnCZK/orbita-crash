@@ -131,23 +131,8 @@ button, input { font: inherit; color: inherit; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0 12px; }
 
-.logo {
-  margin: 0;
-  font-family: var(--logo);
-  font-weight: 400;
-  font-size: 2.3rem;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #a8f6ff 0%, #39c8ff 45%, #1a7cff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--outline);
-  paint-order: stroke fill;
-  filter: drop-shadow(0 4px 0 #4a2fc0) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45));
-  transform: rotate(-2deg);
-}
+.logo { margin: 0; line-height: 0; }
+.logo img { display: block; height: 46px; width: auto; }
 
 .topbar-right { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
 
@@ -410,13 +395,13 @@ a.jelly { text-decoration: none; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .stage { flex: none; height: 52vh; min-height: 300px; }
   .pilot, .status { display: none; }
-  .logo { font-size: 1.8rem; }
+  .logo img { height: 38px; }
 }
 
 @media (max-width: 440px) {
   .topbar-right { gap: 6px; }
   .jelly-icon { width: 36px; height: 36px; border-radius: 12px; }
-  .logo { font-size: 1.5rem; }
+  .logo img { height: 32px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
