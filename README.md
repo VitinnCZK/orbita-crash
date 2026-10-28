@@ -117,17 +117,17 @@ Lighthouse 13 em [orbita.vitormello.dev](https://orbita.vitormello.dev/), modo m
 
 | Performance | Acessibilidade | Boas práticas | SEO |
 |:---:|:---:|:---:|:---:|
-| 89 | 100 | 100 | 90 |
+| 91 | 100 | 100 | 100 |
 
 | Métrica | Valor |
 |---|---|
-| First Contentful Paint | 2,9 s |
-| Largest Contentful Paint | 3,0 s |
-| Total Blocking Time | 60 ms |
-| Cumulative Layout Shift | 0,042 |
-| Speed Index | 2,9 s |
+| First Contentful Paint | 2,8 s |
+| Largest Contentful Paint | 2,8 s |
+| Total Blocking Time | 20 ms |
+| Cumulative Layout Shift | 0,044 |
+| Speed Index | 2,8 s |
 
-O TBT baixo mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip). Nessa medição, o CSS do Google Fonts aparecia bloqueando a renderização; depois disso ele passou a carregar via `preload`, sem segurar a primeira pintura.
+O TBT de 20 ms mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip). O CSS do Google Fonts carrega via `preload`, sem segurar a primeira pintura.
 
 ## ☁️ Deploy
 
