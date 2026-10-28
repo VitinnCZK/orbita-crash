@@ -1,4 +1,5 @@
 import { useGameStore } from '../store';
+import { ExternalLinks } from './ExternalLinks';
 import { SoundControl } from './SoundControl';
 
 const STATUS_LABEL = { connecting: 'Conectando', online: 'Online', offline: 'Reconectando' } as const;
@@ -19,6 +20,7 @@ export function TopBar() {
           {balance.toFixed(2)}
         </span>
         <SoundControl />
+        <ExternalLinks />
       </div>
     </header>
   );
