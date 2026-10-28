@@ -6,7 +6,7 @@
 
 **▶️ Jogue agora:** [orbita.vitormello.dev](https://orbita.vitormello.dev/)
 
-<!-- Adicione aqui um GIF ou print do jogo: ![Órbita](docs/preview.gif) -->
+![Rodada completa no Órbita: apostas, decolagem, saque e explosão](docs/preview.gif)
 
 ---
 
@@ -113,18 +113,29 @@ Antes da rodada, o servidor gera uma `seed` aleatória e publica apenas `sha256(
 
 ## 📊 Performance medida
 
-_(Preencha com seus números reais.)_
+Lighthouse 13 em [orbita.vitormello.dev](https://orbita.vitormello.dev/), modo mobile (Moto G Power simulado, CPU 4x mais lenta, rede 4G lenta):
 
-- Dispositivo: ...
-- FPS médio durante o voo: ...
-- Print do Performance do Chrome DevTools: ...
-- Lighthouse (mobile): ...
+| Performance | Acessibilidade | Boas práticas | SEO |
+|:---:|:---:|:---:|:---:|
+| 89 | 100 | 100 | 90 |
+
+| Métrica | Valor |
+|---|---|
+| First Contentful Paint | 2,9 s |
+| Largest Contentful Paint | 3,0 s |
+| Total Blocking Time | 60 ms |
+| Cumulative Layout Shift | 0,042 |
+| Speed Index | 2,9 s |
+
+O TBT baixo mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip). Nessa medição, o CSS do Google Fonts aparecia bloqueando a renderização; depois disso ele passou a carregar via `preload`, sem segurar a primeira pintura.
 
 ## ☁️ Deploy
 
-**Servidor (Render ou Railway):** build `npm install && npm run build -w server`, start `npm run start -w server`. A porta vem de `PORT`.
+A demo roda com o servidor no Railway (`api.orbita.vitormello.dev`) e o cliente na Vercel (`orbita.vitormello.dev`).
 
-**Cliente (Vercel):** root `client`, build `npm run build`, output `dist`, variável `VITE_WS_URL=wss://seu-servidor`.
+**Servidor (Railway ou Render):** build `npm install && npm run build -w server`, start `npm run start -w server`, health check em `/health`, variável `NODE_VERSION=20`. A porta vem de `PORT`.
+
+**Cliente (Vercel):** root directory na raiz do repositório (o cliente depende do workspace `packages/shared` e do TypeScript da raiz), install `npm install`, build `npm run build -w client`, output `client/dist`, variável `VITE_WS_URL=wss://seu-servidor`. A variável entra no bundle no momento do build: depois de alterá-la, faça um novo deploy sem cache.
 
 ## 🎯 O que aprendi
 
@@ -136,3 +147,7 @@ _(Preencha com seus números reais.)_
 ## 📝 Aviso
 
 Projeto educacional. Não envolve dinheiro real, não é um produto de apostas e não deve ser usado como tal.
+
+## 📄 Licença
+
+[MIT](LICENSE) © Vitor Mello
