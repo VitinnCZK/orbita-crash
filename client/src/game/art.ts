@@ -1,10 +1,62 @@
 import { CanvasSource, Texture } from 'pixi.js';
+import asteroid1Url from '../assets/images/game/asteroid-1.webp';
+import asteroid2Url from '../assets/images/game/asteroid-2.webp';
+import asteroid3Url from '../assets/images/game/asteroid-3.webp';
+import boomUrl from '../assets/images/game/boom.webp';
+import coinUrl from '../assets/images/game/coin.webp';
+import planetLilasUrl from '../assets/images/game/planet-lilas.webp';
+import planetLuaUrl from '../assets/images/game/planet-lua.webp';
+import planetMarteUrl from '../assets/images/game/planet-marte.webp';
+import puffUrl from '../assets/images/game/puff.webp';
+import rocketUrl from '../assets/images/game/rocket.webp';
 
 /**
- * Arte cartoon gerada por código: cada peça é desenhada uma vez num canvas 2D
- * (que tem gradientes radiais e sombras de graça) e vira textura. Nada de
- * imagem externa para baixar, e a nitidez acompanha a resolução da tela.
+ * Arte cartoon do jogo. Cada peça vira uma textura de duas formas possíveis:
+ *  - USE_SPRITES = true: usa as imagens WebP geradas por IA (assets/images/game),
+ *    carregadas uma vez por loadArt();
+ *  - USE_SPRITES = false: desenha tudo por código num canvas 2D (gradientes
+ *    radiais e sombras de graça), sem baixar imagem nenhuma.
+ * As funções têm a mesma assinatura nos dois modos, então o GameScene não muda.
  */
+export const USE_SPRITES = true;
+
+const SPRITE_URLS = {
+  rocket: rocketUrl,
+  boom: boomUrl,
+  coin: coinUrl,
+  puff: puffUrl,
+  lilas: planetLilasUrl,
+  marte: planetMarteUrl,
+  lua: planetLuaUrl,
+  asteroid1: asteroid1Url,
+  asteroid2: asteroid2Url,
+  asteroid3: asteroid3Url,
+};
+type SpriteKey = keyof typeof SPRITE_URLS;
+
+const images = {} as Record<SpriteKey, HTMLImageElement>;
+
+/** Decodifica as imagens antes de montar a cena. Não faz nada no modo canvas. */
+export async function loadArt() {
+  if (!USE_SPRITES) return;
+  await Promise.all(
+    (Object.entries(SPRITE_URLS) as [SpriteKey, string][]).map(async ([key, url]) => {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      images[key] = img;
+    }),
+  );
+}
+
+/** Desenha a imagem centralizada, mantendo a proporção dentro de w x h. */
+function drawFit(ctx: CanvasRenderingContext2D, img: HTMLImageElement, w: number, h: number) {
+  const k = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * k;
+  const dh = img.naturalHeight * k;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+}
 
 const OUTLINE = '#1d1140';
 
@@ -56,6 +108,12 @@ export function planet(r: number, p: PlanetPalette, resolution: number, seed = 7
     ctx.beginPath();
     ctx.arc(0, 0, r * 1.45, 0, Math.PI * 2);
     ctx.fill();
+
+    if (USE_SPRITES) {
+      const key = p.detail === 'craters' ? 'lilas' : p.detail === 'bands' ? 'marte' : 'lua';
+      drawFit(ctx, images[key], r * 2, r * 2);
+      return;
+    }
 
     ctx.save();
     ctx.beginPath();
@@ -117,6 +175,10 @@ export const ROCKET = { width: 92, height: 64, tailX: -34 };
 
 export function rocket(resolution: number) {
   return bake(ROCKET.width, ROCKET.height, resolution, (ctx) => {
+    if (USE_SPRITES) {
+      drawFit(ctx, images.rocket, ROCKET.width, ROCKET.height);
+      return;
+    }
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
     ctx.strokeStyle = OUTLINE;
@@ -210,6 +272,12 @@ export function rocket(resolution: number) {
 export function asteroid(r: number, resolution: number, seed: number) {
   const size = r * 2.4;
   return bake(size, size, resolution, (ctx) => {
+    if (USE_SPRITES) {
+      // as 3 seeds usadas pelo GameScene (17, 42, 99) viram os 3 formatos
+      const shapes = [images.asteroid1, images.asteroid2, images.asteroid3];
+      drawFit(ctx, shapes[[17, 42, 99].indexOf(seed) === -1 ? seed % 3 : [17, 42, 99].indexOf(seed)]!, r * 2.1, r * 2.1);
+      return;
+    }
     const rnd = rand(seed);
     const n = 9;
     const pts: [number, number][] = [];
@@ -248,6 +316,10 @@ export function asteroid(r: number, resolution: number, seed: number) {
 export function coin(r: number, resolution: number) {
   const size = r * 2 + 4;
   return bake(size, size, resolution, (ctx) => {
+    if (USE_SPRITES) {
+      drawFit(ctx, images.coin, size - 2, size - 2);
+      return;
+    }
     ctx.fillStyle = '#b86a00';
     ctx.beginPath();
     ctx.arc(0, 1.5, r, 0, Math.PI * 2);
@@ -282,6 +354,10 @@ export function boom(r: number, resolution: number) {
     return p;
   };
   return bake(size, size, resolution, (ctx) => {
+    if (USE_SPRITES) {
+      drawFit(ctx, images.boom, r * 2.1, r * 2.1);
+      return;
+    }
     ctx.lineJoin = 'round';
     const outer = star(r, r * 0.62, 11);
     ctx.fillStyle = radial(ctx, 0, 0, r * 0.1, r, [[0, '#ffe066'], [0.6, '#ff8a1e'], [1, '#ff4d3d']]);
@@ -298,6 +374,10 @@ export function boom(r: number, resolution: number) {
 export function puff(r: number, resolution: number) {
   const size = r * 2 + 4;
   return bake(size, size, resolution, (ctx) => {
+    if (USE_SPRITES) {
+      drawFit(ctx, images.puff, r * 2, r * 2);
+      return;
+    }
     ctx.fillStyle = radial(ctx, -r * 0.3, -r * 0.35, 1, r, [[0, '#f2e8ff'], [0.6, '#b7a3dc'], [1, '#7d68ae']]);
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
@@ -305,5 +385,132 @@ export function puff(r: number, resolution: number) {
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = r * 0.1;
     ctx.stroke();
+  });
+}
+
+/** Bolha macia sem contorno, usada no rastro de fumaça do foguete (sempre por canvas, tingida no jogo). */
+export function smoke(r: number, resolution: number) {
+  const size = r * 2 + 2;
+  return bake(size, size, resolution, (ctx) => {
+    ctx.fillStyle = radial(ctx, 0, 0, 0, r, [[0, 'rgba(255,255,255,1)'], [0.55, 'rgba(255,255,255,0.75)'], [1, 'rgba(255,255,255,0)']]);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+/** Pedaços do foguete que ficam flutuando depois da explosão (sempre por canvas, no mesmo estilo do foguete). */
+export type DebrisKind = 'nose' | 'fin' | 'porthole' | 'shard' | 'nozzle';
+
+export function debris(kind: DebrisKind, resolution: number) {
+  const size = kind === 'shard' ? [30, 22] : kind === 'nose' ? [34, 32] : kind === 'porthole' ? [34, 34] : kind === 'fin' ? [26, 24] : [16, 22];
+  return bake(size[0]!, size[1]!, resolution, (ctx) => {
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = OUTLINE;
+    const fill = (path: Path2D, from: string, to: string, y0: number, y1: number) => {
+      const g = ctx.createLinearGradient(0, y0, 0, y1);
+      g.addColorStop(0, from);
+      g.addColorStop(1, to);
+      ctx.fillStyle = g;
+      ctx.fill(path);
+      ctx.stroke(path);
+    };
+    if (kind === 'fin') {
+      const p = new Path2D();
+      p.moveTo(-10, 8);
+      p.quadraticCurveTo(-6, -4, 10, -9);
+      p.lineTo(7, 4);
+      p.lineTo(2, 9);
+      p.closePath();
+      fill(p, '#8b6cff', '#4a2fc0', -9, 9);
+    } else if (kind === 'nose') {
+      const p = new Path2D();
+      p.moveTo(-12, -12);
+      p.quadraticCurveTo(6, -12, 15, 0);
+      p.quadraticCurveTo(6, 12, -12, 12);
+      p.lineTo(-7, 7);
+      p.lineTo(-12, 2);
+      p.lineTo(-6, -4);
+      p.closePath();
+      fill(p, '#ffb15c', '#ff4d6d', -12, 12);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.ellipse(3, -6, 6, 2, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === 'porthole') {
+      const p = new Path2D();
+      const rnd = rand(5);
+      for (let i = 0; i < 9; i++) {
+        const ang = (i / 9) * Math.PI * 2;
+        const d = 12 + rnd() * 4;
+        p.lineTo(Math.cos(ang) * d, Math.sin(ang) * d);
+      }
+      p.closePath();
+      fill(p, '#ffffff', '#9d93e0', -14, 14);
+      ctx.fillStyle = '#2a3c9c';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = radial(ctx, -1, -2, 1, 6, [[0, '#c9fbff'], [0.5, '#4fd6ff'], [1, '#1a7fd1']]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 1.4; // vidro trincado
+      ctx.beginPath();
+      ctx.moveTo(-4, -3);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(3, -4);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(1, 5);
+      ctx.stroke();
+    } else if (kind === 'shard') {
+      const p = new Path2D();
+      p.moveTo(-13, -7);
+      p.lineTo(-3, -9);
+      p.lineTo(4, -6);
+      p.lineTo(13, -8);
+      p.lineTo(9, 1);
+      p.lineTo(13, 8);
+      p.lineTo(0, 6);
+      p.lineTo(-6, 9);
+      p.lineTo(-11, 3);
+      p.closePath();
+      fill(p, '#ffffff', '#9d93e0', -9, 9);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fillRect(-1, -8, 5, 15);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-1, -8, 5, 15);
+    } else {
+      const p = new Path2D();
+      p.roundRect(-4, -8, 8, 16, 3);
+      fill(p, '#6c6a94', '#3e3d5e', -8, 8);
+    }
+  });
+}
+
+/** Vinheta branca (centro transparente, bordas opacas); o jogo tinge e estica para a tela. */
+export function vignette() {
+  const s = 256;
+  return bake(s, s, 1, (ctx) => {
+    ctx.fillStyle = radial(ctx, 0, 0, s * 0.28, s * 0.72, [[0, 'rgba(255,255,255,0)'], [1, 'rgba(255,255,255,1)']]);
+    ctx.fillRect(-s / 2, -s / 2, s, s);
+  });
+}
+
+/** Rastro das estrelas em alta velocidade: afunila e some. A ponta cheia fica à esquerda, no centro da estrela. */
+export function streak() {
+  return bake(64, 8, 2, (ctx) => {
+    const g = ctx.createLinearGradient(-32, 0, 32, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0.85)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-32, -4);
+    ctx.lineTo(32, 0);
+    ctx.lineTo(-32, 4);
+    ctx.closePath();
+    ctx.fill();
   });
 }

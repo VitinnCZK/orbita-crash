@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { socket } from './net/GameSocket';
-import { initAudio } from './audio';
 import { TopBar } from './components/TopBar';
 import { History } from './components/History';
 import { Stage } from './components/Stage';
@@ -14,7 +13,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    void initAudio();
+    void import('./audio').then((m) => m.initAudio());
   }, []);
 
   return (

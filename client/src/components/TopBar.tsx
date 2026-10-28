@@ -1,4 +1,4 @@
-import logo from '../assets/images/orbita-logo.png';
+import logo from '../assets/images/orbita-logo.webp';
 import { useGameStore } from '../store';
 import { ExternalLinks } from './ExternalLinks';
 import { SoundControl } from './SoundControl';
@@ -13,7 +13,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <h1 className="logo">
-        <img src={logo} alt="Órbita" width={687} height={240} />
+        <img src={logo} alt="Órbita" width={275} height={96} />
       </h1>
       <div className="topbar-right">
         <span className={`status status-${status}`}>{STATUS_LABEL[status]}</span>

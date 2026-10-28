@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAudioSettings } from '../audio';
+import { useAudioSettings } from '../audioSettings';
 
 function SpeakerIcon({ off }: { off: boolean }) {
   return (
