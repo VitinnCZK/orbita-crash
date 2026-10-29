@@ -1,4 +1,5 @@
 import logo from '../assets/images/orbita-logo.webp';
+import logoSmall from '../assets/images/orbita-logo-64.webp';
 import { useGameStore } from '../store';
 import { ExternalLinks } from './ExternalLinks';
 import { SoundControl } from './SoundControl';
@@ -13,7 +14,15 @@ export function TopBar() {
   return (
     <header className="topbar">
       <h1 className="logo">
-        <img src={logo} alt="Órbita" width={275} height={96} />
+        {/* Larguras exibidas: 92 px (≤440), 109 px (≤860) e 132 px; a versão de 64 px de altura cobre celulares. */}
+        <img
+          src={logo}
+          srcSet={`${logoSmall} 183w, ${logo} 275w`}
+          sizes="(max-width: 440px) 92px, (max-width: 860px) 109px, 132px"
+          alt="Órbita"
+          width={275}
+          height={96}
+        />
       </h1>
       <div className="topbar-right">
         <span className={`status status-${status}`}>{STATUS_LABEL[status]}</span>

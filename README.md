@@ -127,7 +127,7 @@ Lighthouse 13 em [orbita.vitormello.dev](https://orbita.vitormello.dev/), modo m
 | Cumulative Layout Shift | 0,044 |
 | Speed Index | 2,8 s |
 
-O TBT de 20 ms mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip). O CSS do Google Fonts carrega via `preload`, sem segurar a primeira pintura.
+O TBT de 20 ms mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip), que só começa a baixar depois da primeira pintura da interface; a montagem da cena é dividida em tarefas curtas e as texturas sobem para a GPU aos poucos. O CSS vai inline no HTML e as fontes são servidas pelo próprio site (`@fontsource`, só subconjunto latino), com `preload`. O áudio só carrega no primeiro gesto do usuário ou quando o navegador fica ocioso.
 
 ## ☁️ Deploy
 

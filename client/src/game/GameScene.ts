@@ -1,8 +1,22 @@
-import { Application, BitmapFont, BitmapText, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
+import {
+  Application,
+  Assets,
+  BitmapFont,
+  BitmapText,
+  CanvasTextMetrics,
+  Container,
+  Graphics,
+  Sprite,
+  Text,
+  type Texture,
+  type TextureSource,
+} from 'pixi.js';
+// O prepare não vem no pacote de extensões que o Application carrega sozinho no init.
+import 'pixi.js/prepare';
 import type { ShockwaveFilter } from 'pixi-filters/shockwave';
 import { BETTING_MS, elapsedFor, multiplierAt, rawMultiplier, type RoundPhase, type RoundSnapshot } from '@crash/shared';
 import { serverNow, useGameStore } from '../store';
-import { engineSound, playSfx } from '../audio';
+import { engineSound, playSfx } from '../sfx';
 import { PLANETS, ROCKET, asteroid, boom, coin, loadArt, planet, puff, rocket, smoke, debris, vignette, streak, type DebrisKind } from './art';
 
 const C = {
@@ -116,6 +130,28 @@ const DEBRIS_FADE_MS = 2500;
 const MILESTONES = [2, 5, 10, 20, 50, 100];
 const MULT_FONT = 'OrbitaMultiplicador';
 
+// letterSpacing nativo do canvas. O modo padrão do PixiJS quebra o texto com Intl.Segmenter
+// e desenha letra por letra, e só o primeiro uso do Segmenter já é uma tarefa longa.
+CanvasTextMetrics.experimentalLetterSpacing = true;
+
+// O módulo do Assets cria a instância global ao ser avaliado, e o construtor limpa o Cache
+// do PixiJS, onde fica a fonte bitmap do multiplicador. Sem esta referência, ele só seria
+// avaliado com o áudio (que carrega depois) e apagaria a fonte: o número sairia serifado.
+void Assets.init();
+
+const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
+
+/**
+ * Texturas e textos da cena para o prepare. Graphics ficam de fora: no PixiJS 8.6 o
+ * prepare de um GraphicsContext ainda não desenhado quebra (_gpuContextHash vazio).
+ */
+function uploadables(root: Container, out: (TextureSource | Text | BitmapText)[] = []) {
+  if (root instanceof Sprite) out.push(root.texture.source);
+  else if (root instanceof Text || root instanceof BitmapText) out.push(root);
+  for (const child of root.children) uploadables(child, out);
+  return out;
+}
+
 let fontInstalled: Promise<void> | null = null;
 
 /**
@@ -127,9 +163,7 @@ let fontInstalled: Promise<void> | null = null;
 function installMultiplierFont(resolution: number) {
   fontInstalled ??= (async () => {
     await Promise.race([
-      Promise.all([document.fonts.load('112px "Lilita One"'), document.fonts.load('40px "Luckiest Guy"')]).catch(
-        () => undefined,
-      ),
+      document.fonts.load('112px "Lilita One"').catch(() => undefined),
       new Promise((r) => setTimeout(r, 2000)),
     ]);
     BitmapFont.install({
@@ -216,20 +250,38 @@ export class GameScene {
   async mount(el: HTMLElement) {
     const resolution = Math.min(window.devicePixelRatio || 1, 2);
     await Promise.all([
-      this.app.init({ resizeTo: el, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution }),
+      this.app.init({
+        preference: 'webgl',
+        autoStart: false, // só começa a desenhar depois do prepare, para o primeiro render não subir tudo de uma vez
+        resizeTo: el,
+        backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution,
+      }),
       installMultiplierFont(resolution),
       loadArt(),
     ]);
+    // Cada etapa pesada roda numa tarefa separada, para nenhuma travar a main thread por muito tempo.
+    await yieldToMain();
+    if (this.disposed) {
+      this.app.destroy(true, { children: true });
+      return;
+    }
+    await this.build(resolution);
+    // Sobe as texturas para a GPU aos poucos (alguns itens por frame) em vez de tudo no primeiro render.
+    await this.app.renderer.prepare.upload(uploadables(this.app.stage));
+    await yieldToMain();
     if (this.disposed) {
       this.app.destroy(true, { children: true });
       return;
     }
     el.appendChild(this.app.canvas);
-    this.build(resolution);
     void import('pixi-filters/shockwave').then(({ ShockwaveFilter }) => {
       if (!this.disposed) this.shockwave = new ShockwaveFilter({ speed: 650, amplitude: 24, wavelength: 150, brightness: 1.25 });
     });
     this.app.ticker.add((t) => this.update(t.deltaMS));
+    this.app.start();
     this.ready = true;
   }
 
@@ -243,7 +295,8 @@ export class GameScene {
 
   /* ---------- Montagem ---------- */
 
-  private build(res: number) {
+  /** Monta a cena em blocos, cedendo a main thread entre eles (cada bloco assa algumas texturas). */
+  private async build(res: number) {
     const dotG = new Graphics().circle(0, 0, 8).fill(0xffffff);
     this.tex = { dot: this.app.renderer.generateTexture(dotG), coin: coin(10, res), puff: puff(18, res), smoke: smoke(16, res) };
     dotG.destroy();
@@ -288,6 +341,7 @@ export class GameScene {
       this.stars.push({ sprite, size, trail, depth, base: 0.3 + depth * 0.6, phase: Math.random() * Math.PI * 2 });
     }
 
+    await yieldToMain();
     const addPlanet = (baseR: number, palette: (typeof PLANETS)[keyof typeof PLANETS], seed: number, d: Omit<Drifter, 'sprite' | 'baseR' | 'spin' | 'offset'>) => {
       const sprite = new Sprite(planet(baseR, palette, res, seed));
       sprite.anchor.set(0.5);
@@ -298,6 +352,7 @@ export class GameScene {
     addPlanet(80, PLANETS.marte, 5, { nx: 0.84, ny: 0.2, size: 0.12, depth: 0.25 });
     addPlanet(40, PLANETS.lua, 3, { nx: 0.6, ny: 0.1, size: 0.045, depth: 0.4 });
 
+    await yieldToMain();
     const rockTextures = [asteroid(28, res, 17), asteroid(28, res, 42), asteroid(28, res, 99)];
     const rockCount = this.reducedMotion ? 3 : 6;
     for (let i = 0; i < rockCount; i++) {
@@ -328,6 +383,7 @@ export class GameScene {
       this.gridLabels.push(label);
     }
 
+    await yieldToMain();
     this.debrisTex = {
       nose: debris('nose', res),
       fin: debris('fin', res),
@@ -344,6 +400,7 @@ export class GameScene {
       this.smoke.push({ sprite, t: 0, age: 0, life: 0, ox: 0, oy: 0, vx: 0, vy: 0, spin: 0, s0: 0, s1: 0 });
     }
 
+    await yieldToMain();
     const ship = new Sprite(rocket(res));
     ship.anchor.set(0.5);
     this.rocket.addChild(this.flame, ship);
