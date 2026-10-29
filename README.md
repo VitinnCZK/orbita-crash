@@ -117,17 +117,17 @@ Lighthouse 13 em [orbita.vitormello.dev](https://orbita.vitormello.dev/), modo m
 
 | Performance | Acessibilidade | Boas práticas | SEO |
 |:---:|:---:|:---:|:---:|
-| 91 | 100 | 100 | 100 |
+| 100 | 100 | 100 | 100 |
 
 | Métrica | Valor |
 |---|---|
-| First Contentful Paint | 2,8 s |
-| Largest Contentful Paint | 2,8 s |
-| Total Blocking Time | 20 ms |
-| Cumulative Layout Shift | 0,044 |
-| Speed Index | 2,8 s |
+| First Contentful Paint | 1,2 s |
+| Largest Contentful Paint | 1,4 s |
+| Total Blocking Time | 80 ms |
+| Cumulative Layout Shift | 0,003 |
+| Speed Index | 1,4 s |
 
-O TBT de 20 ms mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip), que só começa a baixar depois da primeira pintura da interface; a montagem da cena é dividida em tarefas curtas e as texturas sobem para a GPU aos poucos. O CSS vai inline no HTML e as fontes são servidas pelo próprio site (`@fontsource`, só subconjunto latino), com `preload`. O áudio só carrega no primeiro gesto do usuário ou quando o navegador fica ocioso.
+O TBT de 80 ms mostra que o loop do PixiJS não trava a thread principal. O maior custo de carregamento é o núcleo do PixiJS (~170 kB gzip), que só começa a baixar depois da primeira pintura da interface; a montagem da cena é dividida em tarefas curtas e as texturas sobem para a GPU aos poucos. O CSS vai inline no HTML e as fontes são servidas pelo próprio site (`@fontsource`, só subconjunto latino), com `preload`. O áudio só carrega no primeiro gesto do usuário ou quando o navegador fica ocioso.
 
 ## ☁️ Deploy
 
