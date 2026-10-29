@@ -1,6 +1,6 @@
 # Prompts de arte (IA) — Órbita
 
-Um prompt por peça que hoje é desenhada em código em `client/src/game/art.ts`.
+Um prompt por sprite usado no jogo (`client/src/assets/images/game`). Cada peça também tem uma versão desenhada em código em `client/src/game/art.ts`, usada quando `USE_SPRITES = false`.
 Os prompts estão em inglês porque os geradores de imagem respondem melhor assim.
 
 ## Como gerar sem fundo

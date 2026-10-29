@@ -6,13 +6,18 @@
 
 **▶️ Jogue agora:** [orbita.vitormello.dev](https://orbita.vitormello.dev/)
 
-![Rodada completa no Órbita: apostas, decolagem, saque e explosão](docs/preview.gif)
+<img width="600" height="488" alt="Rodada completa no Órbita: apostas, decolagem, saque e explosão" src="https://github.com/user-attachments/assets/cbff767d-7ff9-4f7f-ac79-40c661e88358" />
+
+| Apostas abertas | Voo | Saque | Explosão |
+|:---:|:---:|:---:|:---:|
+| ![Contagem regressiva da fase de apostas com a lista de jogadores](docs/screenshots/apostas.webp) | ![Foguete em voo com o multiplicador em 9.49x](docs/screenshots/voo.webp) | ![Saque automático em 1.50x com ganho de +46.50](docs/screenshots/saque.webp) | ![Foguete explodindo em 18.74x](docs/screenshots/explosao.webp) |
 
 ---
 
 ## ✨ O que este projeto demonstra
 
-- **PixiJS 8** para toda a cena: céu estrelado com parallax, planetas e asteroides gerados proceduralmente, curva do voo, chama do foguete, partículas, explosão e onda de choque (`pixi-filters`).
+- **PixiJS 8** para toda a cena: céu estrelado com parallax, planetas e asteroides, curva do voo com rastro de fumaça, chama do foguete, partículas, explosão e onda de choque (`pixi-filters`).
+- **Arte em duas camadas**: os sprites (foguete, planetas, asteroides, moeda, explosão e fumaça) foram gerados com IA, com os prompts e o processo de recorte documentados em [`docs/prompts-arte-ia.md`](docs/prompts-arte-ia.md). Estrelas, curva, chama, rastro, destroços, vinheta e onda de choque são desenhados em código. Cada sprite também tem uma versão procedural em `art.ts`, ativada com `USE_SPRITES = false`.
 - **Multiplayer em tempo real** com WebSockets (`ws`) e protocolo tipado e validado.
 - **Servidor autoritativo**: o cliente só desenha; todas as decisões (aposta, saque, ponto de explosão) são do servidor.
 - **Resultado verificável (commit-reveal)**: o hash da seed é publicado antes da rodada e a seed é revelada após a explosão.
@@ -56,7 +61,7 @@ packages/shared   Protocolo, tipos e regras da rodada (usado pelos dois lados)
 server            Node + ws: máquina de estados, apostas, saques, bots
 client            Vite + React + TypeScript + PixiJS 8 + Zustand
   src/net         GameSocket: reconexão e sincronização de relógio
-  src/game        GameScene (renderização PixiJS) e art.ts (arte procedural)
+  src/game        GameScene (renderização PixiJS) e art.ts (sprites e arte procedural)
   src/components  HUD em React (aposta, histórico, jogadores, topo, som)
   src/hooks       useLiveMultiplier
   src/audio.ts    Efeitos e música
@@ -142,7 +147,7 @@ A demo roda com o servidor no Railway (`api.orbita.vitormello.dev`) e o cliente 
 - Estruturar uma cena PixiJS 8 (containers, ticker, filtros, pools) e destruí-la corretamente dentro do ciclo de vida do React.
 - Separar o que roda por frame (canvas) do que roda por evento (React) para manter 60 FPS.
 - Projetar um protocolo em tempo real com servidor autoritativo e sincronização de relógio.
-- Gerar arte e texturas proceduralmente para reduzir dependência de assets.
+- Gerar arte e texturas proceduralmente e, depois, trocar peças por sprites gerados com IA sem mudar a cena, mantendo as duas versões atrás da mesma interface.
 
 ## 📝 Aviso
 
